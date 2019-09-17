@@ -1,0 +1,269 @@
+<html>
+    <head>
+        <meta charset="utf8">
+        <title>Jeux d'echec</title>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
+        <link rel="stylesheet" href="style.css">
+        <script src="https://code.jquery.com/jquery-3.4.1.min.js"
+          integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+          crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    </head>
+    <body>
+        <center>
+            <br/>
+            <h1>Jeux d'echec</h1>
+            <button class="btn btn-primary" type="button" onclick="applyIa(3)">Lancer l'IA</button>
+            <br><br>
+            <div id="whoPlayer">C'est au joueur <font color='red'>1</font></div>
+            <div id="echec"></div>
+            <div id="cases"></div>
+            <div id="msg"></div>
+        </center>
+    </body>
+    <div class="modal text-dark text-center" tabindex="-1" role="dialog">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Votre choix</h5>
+          </div>
+          <div class="modal-body">
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-primary" type="button" onclick='choiceModal()'>Valider</button>
+          </div>
+        </div>
+      </div>
+    </div>
+</html>
+
+<script src="socket.io.js"></script>
+<script src="action.js"></script>
+<script src="ia.js"></script>
+<script>
+    /*
+    legende :
+    0 = case vide
+
+    11 = pion blanc
+    12 = pion noir
+
+    21 = cavalier blanc
+    22 = cavalier noir
+
+    31 = tour blanche
+    32 = tour noire
+
+    41 = fou blanc
+    42 = fou noir
+                
+    51 = reine blanche
+    52 = reine noire
+
+    61 = roi blanc
+    62 = roi noir
+    */
+
+    let functionCoupSpecial;
+    
+    const positionInitales = {0: {0: 32, 1: 22, 2: 42, 3: 52, 4: 62, 5: 42, 6: 22, 7: 32},
+                              1: {0: 12, 1: 12, 2: 12, 3: 12, 4: 12, 5: 12, 6: 12, 7: 12},
+
+                              6: {0: 11, 1: 11, 2: 11, 3: 11, 4: 11, 5: 11, 6: 11, 7: 11},
+                              7: {0: 31, 1: 21, 2: 41, 3: 51, 4: 61, 5: 41, 6: 21, 7: 31}};
+    let currentPlayer = 1;
+
+    let choicedCases = [];
+
+    let scorePlayers = {1 : {}, 2: {}};
+
+    let infosCase = [];
+
+    let dataInfoCase = {
+        1: { // pions
+            justTwoDeplacment: false
+        }, 
+        0: { //tous le mondes
+            nb: 0,
+            isLastDeplacment: false
+        }
+    }
+
+    let playing = true;
+
+    const numToLetter = {0: "A", 1: "B", 2: "C", 3: "D", 4: "E", 5: "F", 6: "G", 7: "H"};
+
+    let echec = genEchecTab();
+
+    displayEchec();
+
+    function genEchecTab() {
+        let tab = [];
+        for (let l=0;l<8;l++) {
+            tab.push([]);
+            for (let c=0;c<8;c++) {
+                if (typeof(positionInitales[l]) != "undefined") {
+                    if (typeof(positionInitales[l][c]) != "undefined") {
+                        tab[l].push(positionInitales[l][c]);
+                        if (typeof(scorePlayers[positionInitales[l][c]%10][Math.floor(positionInitales[l][c]/10)]) == "undefined") {
+                            scorePlayers[positionInitales[l][c]%10][Math.floor(positionInitales[l][c]/10)] = 1;
+                        } else {
+                            scorePlayers[positionInitales[l][c]%10][Math.floor(positionInitales[l][c]/10)] += 1;
+                        }
+                        infosCase.push({l: l, c: c, type: Math.floor(tab[l][c]/10)})
+                        for (let key in dataInfoCase[0]) {
+                            infosCase[infosCase.length-1][key] = dataInfoCase[0][key];
+                        }
+                        if (typeof(dataInfoCase[Math.floor(tab[l][c]/10)]) != "undefined") {
+                            for (let key in dataInfoCase[Math.floor(tab[l][c]/10)]) {
+                                infosCase[infosCase.length-1][key] = dataInfoCase[Math.floor(tab[l][c]/10)][key];
+                            }
+                        }
+                    }
+                }
+                if (typeof(tab[l][c]) == "undefined") {
+                    tab[l].push(0);
+                }
+            }
+        }
+        return tab;
+    }
+
+    async function valid() {
+        if (!playing) {
+            return;
+        }
+        if (choicedCases.length != 2) {
+            return;
+        }
+        let A = caseNameToCoor(choicedCases[0]),
+            B = caseNameToCoor(choicedCases[1]);
+        applyMouv(A,B);
+    }
+
+    async function applyMouv(A,B) {
+        let datas = await action(A,B);
+        let success = datas.success, coupSpecial = datas.coupSpecial;
+
+        choicedCases = [];
+        if (!success) {
+            document.getElementById("msg").innerHTML = "<font color='red'>Mouvement impossible</font>";
+            return;
+        }
+        displayEchec();
+        document.getElementById("msg").innerHTML = "";
+        if (echecEtMat(echec,currentPlayer)) {
+            document.getElementById("msg").innerHTML = "<strong>Partie terminée</strong><br/>"+
+                                                       "gagnant : joueur <font color='"+(currentPlayer == 1 ? "green" : "red")+"'>"+(currentPlayer == 1 ? 2 : 1)+"</font><br/>"+
+                                                       "perdant : joueur <font color='"+(currentPlayer == 1 ? "red" : "green")+"'>"+currentPlayer+"</font>";
+            playing = false;
+            return;
+        }
+        if (typeof(coupSpecial) == "object") {
+            let selectReponse = "<select id='rep'>";
+            for (let i=0;i<coupSpecial.reponses.length;i++) {
+                selectReponse += "<option value='"+coupSpecial.reponses[i]+"'>"+coupSpecial.reponses[i]+"</option>";
+            }
+            selectReponse += "</select>";
+
+            $(".modal-body").html(coupSpecial.msg+" : "+selectReponse);
+
+            $(".modal").modal("toggle");
+
+            functionCoupSpecial = coupSpecial.func;
+            return;
+        }
+
+        if (isEchec(currentPlayer,echec)) {
+            document.getElementById("msg").innerHTML = "<font color='red'>Vous êtes en echec</font>";
+        }
+
+        if (echecEtMat(echec,1)) {
+            playing = false;
+            document.getElementById("msg").innerHTML = "Gagnant : joueur <font color='green'>2</font><br/>"+
+                                                       "Perdant : joueur <font color='red'>1</font>";
+            return;
+        } else if (echecEtMat(echec,2)) {
+            playing = false;
+            document.getElementById("msg").innerHTML = "Gagnant : joueur <font color='red'>1</font><br/>"+
+                                                       "Perdant : joueur <font color='green'>2</font>";
+            return;
+        }
+
+        currentPlayer = (currentPlayer == 1 ? 2 : 1);
+        document.getElementById("whoPlayer").innerHTML = "C'est au joueur <font color='"+(currentPlayer == 1 ? "red" : "green")+"'>"+currentPlayer+"</font>";
+    }
+
+    function displayEchec() {
+        lA = lastDeplacment.lA;
+        cA = lastDeplacment.cA;
+        lB = lastDeplacment.lB;
+        cB = lastDeplacment.cB;
+        let str = "<table>";
+        str += "<tr class='alignCenter'><td></td><td>A</td><td>B</td><td>C</td><td>D</td><td>E</td><td>F</td><td>G</td><td>H</td></tr>";
+        for (let l=0;l<echec.length;l++) {
+            str += "<tr>";
+            str += "<td>"+(8-l)+"</td>";
+            for (let c=0;c<echec[l].length;c++) {
+                let classCSS = "cell"+echec[l][c];
+                if ((l+1)%2 == (c+1)%2) {
+                    classCSS += "b"
+                } else {
+                    classCSS += "m";
+                }
+                if ((l == lA & c == cA) | (l == lB & c == cB)) {
+                    classCSS += " entoured";
+                }
+                str += "<td id='"+l+"-"+c+"' class='cell "+classCSS+"'></td>";
+            }
+            str += "<td>"+(8-l)+"</td>";
+            str += "</tr>";
+        }
+        str += "<tr class='alignCenter'><td></td><td>A</td><td>B</td><td>C</td><td>D</td><td>E</td><td>F</td><td>G</td><td>H</td></tr>";
+        str += "</table>";
+        document.getElementById("echec").innerHTML = str;
+        for (let l=0;l<echec.length;l++) {
+            for (let c=0;c<echec[l].length;c++) {
+                document.getElementById(l+"-"+c).onclick = function () {
+                    let caseName = numToLetter[c]+(8-l);
+                    if (choicedCases.length == 2) {
+                        return;
+                    }
+                    choicedCases.push(caseName);
+                    if (choicedCases.length == 2) {
+                        document.getElementById("cases").innerHTML = document.getElementById("cases").innerHTML+" en "
+                    }
+                    document.getElementById("cases").innerHTML = document.getElementById("cases").innerHTML+"<span class='afficheCase'>"+caseName+"</span>";
+                    if (choicedCases.length == 2) {
+                        setTimeout(() => {
+                            document.getElementById("cases").innerHTML = "";
+                            valid();
+                        }, 100);
+                    }
+                }
+            }
+        }
+    }
+
+    function restart() {
+        currentPlayer = 1;
+        choicedCases = [];
+        scorePlayers = {1 : {}, 2: {}};
+        playing = true;
+        echec = genEchecTab();
+        displayEchec();
+        document.getElementById("whoPlayer").innerHTML = "C'est au joueur <font color='red'>1</font>";
+        document.getElementById("msg").innerHTML = "";
+    }
+
+    function choiceModal() {
+        let reponse = document.getElementById("rep").value;
+
+        $(".modal").modal("toggle");
+        functionCoupSpecial(reponse);
+    }
+
+
+
+</script>
