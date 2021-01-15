@@ -57,7 +57,7 @@
 
     41 = fou blanc
     42 = fou noir
-                
+
     51 = reine blanche
     52 = reine noire
 
@@ -66,7 +66,7 @@
     */
 
     let functionCoupSpecial;
-    
+
     const positionInitales = {0: {0: 32, 1: 22, 2: 42, 3: 52, 4: 62, 5: 42, 6: 22, 7: 32},
                               1: {0: 12, 1: 12, 2: 12, 3: 12, 4: 12, 5: 12, 6: 12, 7: 12},
 
@@ -83,7 +83,7 @@
     let dataInfoCase = {
         1: { // pions
             justTwoDeplacment: false
-        }, 
+        },
         0: { //tous le mondes
             nb: 0,
             isLastDeplacment: false
@@ -97,6 +97,8 @@
     let echec = genEchecTab();
 
     displayEchec();
+    console.log(scorePlayers);
+    console.log(infosCase)
 
     function genEchecTab() {
         let tab = [];

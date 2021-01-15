@@ -57,13 +57,11 @@ function IA() {
         }
         this.taille = 0;
         this.tree = {echec: copyTab(echec), infosCase: copyObj(infosCase), scorePlayers: copyObj(scorePlayers), profondeur: 0};
-        console.log("genTree");
         await this.genTree(this.tree);
-        //console.log("minMax");
-        //await this.minMax(this.tree);
+
         let max = this.tree.branchs[0];
         for (let i=1;i<this.tree.branchs.length;i++) {
-            if (this.tree.branchs[i].score > max.score | 
+            if (this.tree.branchs[i].score > max.score |
                 (this.tree.branchs[i].score == max.score & Math.random() < 1/2)) {
                 max = this.tree.branchs[i];
             }
@@ -88,25 +86,15 @@ function IA() {
                 if (typeof(tree.branchs) == "undefined") {
                     tree.branchs = [];
                 }
-                //console.log(profondeur);
-                //console.log(l+";"+c);
                 let echec = tree.echec;
-                //console.log(echec[l][c]);
                 let infosCase = tree.infosCase;
-                //slet scorePlayers = tree.scorePlayers;
-                //console.log(echec);
                 if (echec[l][c]%10 == currentPlayerb) {
-                    //console.log("if 1");
                     let mouvs = getPath(l,c,echec);
                     for (let i=0;i<mouvs.length;i++) {
                         let echecb = copyObj(echec);
                         let infosCaseb = copyObj(infosCase);
                         let scorePlayersb = copyObj(tree.scorePlayers);
-                        //console.log(i);
-                        //console.log(mouvs);
-                        //console.log("wesh");
                         let datas = await action({l: l, c: c}, {l: mouvs[i].l, c: mouvs[i].c},echecb,currentPlayerb,scorePlayersb,infosCaseb);
-                        //console.log("\n");
 
                         let coupSpecial = datas.coupSpecial, success = datas.success;
 
@@ -120,76 +108,17 @@ function IA() {
 
                                 await func(reponses[j],infosCasebb,scorePlayersbb,currentPlayerb,echecbb,true);
 
-                                let score = 0;
-                                //if (profondeur == this.profondeurMax-1) {
-                                    for (let piece in scorePlayers[1]) {
-                                        if (piece != 6) { // ce n'est pas le roi
-                                            if (scorePlayersbb[1][piece] < scorePlayers[1][piece]) {
-                                                score -= scoreObjets[piece];
-                                            } else if (scorePlayersbb[1][piece] > scorePlayers[1][piece]) {
-                                                score += scoreObjets[piece];
-                                            }
-                                            if (scorePlayersbb[2][piece] < scorePlayers[2][piece]) {
-                                                score += scoreObjets[piece];
-                                            } else if (scorePlayersbb[2][piece] > scorePlayers[2][piece]) {
-                                                score -= scoreObjets[piece];
-                                            }
-                                        }
-                                    }
-                                    if (echecEtMat(echecbb,1)) {
-                                        score -= 10000000;
-                                    }
-                                    if (echecEtMat(echecbb,2)) {
-                                        score += 10000000;
-                                    }
-                                    if (currentPlayer == 2) {
-                                        score = score * (-1);
-                                    }
-                                    if (coupSpecial.name != "roque" | reponses[j] == "non") {
-                                        if ((currentPlayer == 1 & ((echec[7][4] == 61 & echecbb[7][4] != 61) | (echec[7][0] == 31 & echecbb[7][0] != 31 & echec[7][7] == 31 & echecbb[7][7] != 31))) |
-                                            (currentPlayer == 2 & ((echec[0][4] == 61 & echecbb[0][4] != 61) | (echec[0][0] == 31 & echecbb[0][0] != 31 & echec[0][7] == 31 & echecbb[0][7] != 31)))) {
-                                            score -= 1;
-                                        } else if (getInfoCase((currentPlayer == 1 ? 7 : 0),4,infosCase).nb == 0 & getInfoCase((currentPlayer == 1 ? 7 : 0),4,infosCasebb).nb > 0 | 
-                                                  (getInfoCase((currentPlayer == 1 ? 7 : 0),0,infosCase).nb == 0 & getInfoCase((currentPlayer == 1 ? 7 : 0),0,infosCasebb).nb > 0 & Math.floor(echecbb[(currentPlayer == 1 ? 7 : 0)][0]/10) == 3 &
-                                                   getInfoCase((currentPlayer == 1 ? 7 : 0),7,infosCase).nb == 0 & getInfoCase((currentPlayer == 1 ? 7 : 0),7,infosCasebb).nb > 0 & Math.floor(echecbb[(currentPlayer == 1 ? 7 : 0)][7]/10) == 3)) {
-                                            score -= 1;
-                                        }
-                                    }
+                                let score = getScore(scorePlayersbb,echecbb, infosCasebb, coupSpecial, reponses[j]);
 
-                                    if (coupSpecial.name == "roque" & reponses[j] == "oui") {
-                                        score += 1;
-                                    }
-
-                                    /*if (score != 0) {
-                                        console.log("profondeur => "+(profondeur+1));
-                                        console.log(l+";"+c+" => "+mouvs[i].l+";"+mouvs[i].c);
-                                        console.log("score => "+score);
-                                        console.log("currentPlayer => "+currentPlayer);
-                                        console.log(echecbb);
-                                        console.log(scorePlayers);
-                                        console.log(scorePlayersbb);
-                                        console.log("\n");
-                                    }*/
-                                //}
-                                tree.branchs.push({lA: l, cA: c, lB: mouvs[i].l, cB: mouvs[i].c, coupSpecial: () => {func(reponses[j],infosCase,scorePlayers,currentPlayer,echec,false);}, echec: echecbb, infosCase: infosCasebb, 
+                                tree.branchs.push({lA: l, cA: c, lB: mouvs[i].l, cB: mouvs[i].c, coupSpecial: () => {func(reponses[j],infosCase,scorePlayers,currentPlayer,echec,false);}, echec: echecbb, infosCase: infosCasebb,
                                                    scorePlayers: scorePlayersbb, score: score, profondeur: profondeur+1, parent: tree, nbNode: tree.branchs.length});
-                                await this.genTree(tree.branchs[tree.branchs.length-1],profondeur+1,(currentPlayerb == 1 ? 2 : 1));
-                                if ((profondeur%2 == 1 & score < toGet) |
-                                    (profondeur%2 == 0 & score > toGet) |
+                                await this.genTree(tree.branchs[tree.branchs.length-1],profondeur+1,(currentPlayerb === 1 ? 2 : 1));
+                                if ((profondeur%2 === 1 & score < toGet) || // applique l'algo mini max
+                                    (profondeur%2 === 0 & score > toGet) ||
                                     toGet == null) {
                                     toGet = score;
                                 }
-                                if (tree.nbNode > 0) {
-                                    for (let n=0;n<tree.nbNode;n++) {
-                                        const nodeScore = tree.parent.branchs[n].score;
-                                        if ((tree.profondeur%2 == 0 & score >= nodeScore) |
-                                            (tree.profondeur%2 == 1 & score < nodeScore)) {
-                                            coupureAlphaBeta = true;
-                                            //this.taille -= tree.branchs.length-1;
-                                            break;
-                                        }
-                                    }
-                                }
+                                coupureAlphaBeta = alphaBeta(tree,score,coupureAlphaBeta);
                                 if (coupureAlphaBeta) {
                                     break;
                                 }
@@ -198,83 +127,26 @@ function IA() {
                                 break;
                             }
                         } else {
-                            //console.log(l+";"+c+" to "+mouvs[i].l+";"+mouvs[i].c);
                             if (success) {
                                 this.taille += 1;
-                                //console.log("success");
-                                let score = 0;
-                                //if (profondeur == this.profondeurMax-1) {
-                                    for (let piece in scorePlayers[1]) {
-                                        if (piece != 6) { // ce n'est pas le roi
-                                            if (scorePlayersb[1][piece] < scorePlayers[1][piece]) {
-                                                score -= scoreObjets[piece];
-                                            } else if (scorePlayersb[1][piece] > scorePlayers[1][piece]) {
-                                                score += scoreObjets[piece];
-                                            }
-                                            if (scorePlayersb[2][piece] < scorePlayers[2][piece]) {
-                                                score += scoreObjets[piece];
-                                            } else if (scorePlayersb[2][piece] > scorePlayers[2][piece]) {
-                                                score -= scoreObjets[piece];
-                                            }
-                                        }
-                                    }
-                                    if (echecEtMat(echecb,1)) {
-                                        score -= 10000000;
-                                    }
-                                    if (echecEtMat(echecb,2)) {
-                                        score += 10000000;
-                                    }
-                                    if (currentPlayer == 2) {
-                                        score = score * (-1);
-                                    }
-                                    if ((currentPlayer == 1 & ((echec[7][4] == 61 & echecb[7][4] != 61) | (echec[7][0] == 31 & echecb[7][0] != 31 & echec[7][7] == 31 & echecb[7][7] != 31))) |
-                                        (currentPlayer == 2 & ((echec[0][4] == 61 & echecb[0][4] != 61) | (echec[0][0] == 31 & echecb[0][0] != 31 & echec[0][7] == 31 & echecb[0][7] != 31)))) {
-                                        score -= 2;
-                                    } else if (getInfoCase((currentPlayer == 1 ? 7 : 0),4,infosCase).nb == 0 & getInfoCase((currentPlayer == 1 ? 7 : 0),4,infosCaseb).nb > 0 | 
-                                              (getInfoCase((currentPlayer == 1 ? 7 : 0),0,infosCase).nb == 0 & getInfoCase((currentPlayer == 1 ? 7 : 0),0,infosCaseb).nb > 0 & Math.floor(echecb[(currentPlayer == 1 ? 7 : 0)][0]/10) == 3 &
-                                               getInfoCase((currentPlayer == 1 ? 7 : 0),7,infosCase).nb == 0 & getInfoCase((currentPlayer == 1 ? 7 : 0),7,infosCaseb).nb > 0 & Math.floor(echecb[(currentPlayer == 1 ? 7 : 0)][7]/10) == 3)) {
-                                        score -= 2;
-                                    }
-                                //}
-                                /*if (score != 0) {
-                                    console.log("profondeur => "+(profondeur+1));
-                                    console.log(l+";"+c+" => "+mouvs[i].l+";"+mouvs[i].c);
-                                    console.log("score => "+score);
-                                    console.log("currentPlayer => "+currentPlayer);
-                                    console.log(echecb);
-                                    console.log(scorePlayers);
-                                    console.log(scorePlayersb);
-                                    console.log("\n");
-                                }*/
-                                tree.branchs.push({lA: l, cA: c, lB: mouvs[i].l, cB: mouvs[i].c, echec: echecb, infosCase: infosCaseb, 
+
+                                let score = getScore(scorePlayersb,echecb, infosCaseb);
+
+                                tree.branchs.push({lA: l, cA: c, lB: mouvs[i].l, cB: mouvs[i].c, echec: echecb, infosCase: infosCaseb,
                                                    scorePlayers: scorePlayersb, score: score, profondeur: profondeur+1, parent: tree, coupSpecial: null, nbNode: tree.branchs.length});
                                 await this.genTree(tree.branchs[tree.branchs.length-1],profondeur+1,(currentPlayerb == 1 ? 2 : 1));
-                                if ((profondeur%2 == 1 & score < toGet) |
+                                if ((profondeur%2 == 1 & score < toGet) | // applique l'algo mini max
                                     (profondeur%2 == 0 & score > toGet) |
                                     toGet == null) {
                                     toGet = score;
                                 }
-                                if (tree.nbNode > 0) {
-                                    for (let n=0;n<tree.nbNode;n++) {
-                                        const nodeScore = tree.parent.branchs[n].score;
-                                        if ((tree.profondeur%2 == 0 & score >= nodeScore) |
-                                            (tree.profondeur%2 == 1 & score < nodeScore)) {
-                                            coupureAlphaBeta = true;
-                                            //this.taille -= tree.branchs.length-1;
-                                            break;
-                                        }
-                                    }
-                                }
+                                coupureAlphaBeta = alphaBeta(tree,score,coupureAlphaBeta);
                                 if (coupureAlphaBeta) {
                                     break;
                                 }
-                            } else {
-                                //console.log("failed");
                             }
                         }
                     }
-                } else {
-                    //console.log("if 2");
                 }
             }
             if (coupureAlphaBeta) {
@@ -284,6 +156,62 @@ function IA() {
         tree.score = toGet;
         return true;
     }
+}
+
+function alphaBeta(tree, score, coupureAlphaBeta) {
+    if (tree.nbNode > 0) { // applique la coupure alpha beta
+        for (let n=0;n<tree.nbNode;n++) {
+            const nodeScore = tree.parent.branchs[n].score;
+            if ((tree.profondeur%2 == 0 & score >= nodeScore) |
+                (tree.profondeur%2 == 1 & score < nodeScore)) {
+                coupureAlphaBeta = true;
+                break;
+            }
+        }
+    }
+    return coupureAlphaBeta;
+}
+
+function getScore(scorePlayersbb,echecbb, infosCasebb , coupSpecial = null, reponse = null) {
+    let score = 0;
+    for (let piece in scorePlayers[1]) {
+        if (piece != 6) { // ce n'est pas le roi
+            if (scorePlayersbb[1][piece] < scorePlayers[1][piece]) {
+                score -= scoreObjets[piece];
+            } else if (scorePlayersbb[1][piece] > scorePlayers[1][piece]) {
+                score += scoreObjets[piece];
+            }
+            if (scorePlayersbb[2][piece] < scorePlayers[2][piece]) {
+                score += scoreObjets[piece];
+            } else if (scorePlayersbb[2][piece] > scorePlayers[2][piece]) {
+                score -= scoreObjets[piece];
+            }
+        }
+    }
+    if (echecEtMat(echecbb,1)) {
+        score -= 10000000;
+    }
+    if (echecEtMat(echecbb,2)) {
+        score += 10000000;
+    }
+    if (currentPlayer == 2) {
+        score *= -1;
+    } // Si un roi ou une tour se sont déplacé durant ce coup spécial, et que ce n'est pas un roque, décrémenter le score
+    if ((coupSpecial == null) || (coupSpecial.name !== "roque" || reponse === "non")) {
+        if ((currentPlayer == 1 & ((echec[7][4] == 61 & echecbb[7][4] != 61) | (echec[7][0] == 31 & echecbb[7][0] != 31 & echec[7][7] == 31 & echecbb[7][7] != 31))) |
+            (currentPlayer == 2 & ((echec[0][4] == 61 & echecbb[0][4] != 61) | (echec[0][0] == 31 & echecbb[0][0] != 31 & echec[0][7] == 31 & echecbb[0][7] != 31)))) {
+            score -= 1;
+        } else if (getInfoCase((currentPlayer === 1 ? 7 : 0),4,infosCase).nb === 0 && getInfoCase((currentPlayer === 1 ? 7 : 0),4,infosCasebb).nb > 0 ||
+                  (getInfoCase((currentPlayer === 1 ? 7 : 0),0,infosCase).nb === 0 && getInfoCase((currentPlayer === 1 ? 7 : 0),0,infosCasebb).nb > 0 && Math.floor(echecbb[(currentPlayer === 1 ? 7 : 0)][0]/10) === 3 &
+                   getInfoCase((currentPlayer === 1 ? 7 : 0),7,infosCase).nb === 0 && getInfoCase((currentPlayer === 1 ? 7 : 0),7,infosCasebb).nb > 0 && Math.floor(echecbb[(currentPlayer === 1 ? 7 : 0)][7]/10) === 3)) {
+            score -= 1;
+        }
+    }
+    // Si un roque à été fait, incrementer le score
+    if (coupSpecial != null && coupSpecial.name === "roque" && reponse === "oui") {
+        score += 1;
+    }
+    return score;
 }
 
 const scoreObjets = {

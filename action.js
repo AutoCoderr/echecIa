@@ -34,7 +34,7 @@
 
     currentPlayer = (currentPlayer == 1 ? 2 : 1);
     document.getElementById("whoPlayer").innerHTML = "C'est au joueur <font color='"+(currentPlayer == 1 ? "red" : "green")+"'>"+currentPlayer+"</font>";
-    
+
 }*/
 let lastDeplacment = {};
 async function action(A, B, echecb = echec, currentPlayerb = currentPlayer, scorePlayersb = scorePlayers, infosCaseb = infosCase) {
@@ -85,8 +85,8 @@ async function action(A, B, echecb = echec, currentPlayerb = currentPlayer, scor
             await deplace(lA,cA,listMouv,echecb,10+currentPlayerb,scorePlayersb,infosCaseb,currentPlayerb);
             const lP = listMouv[listMouv.length-1].l;
             const cP = listMouv[listMouv.length-1].c;
-            if (listMouv[0].c != cA & 
-                ((currentPlayerb == 1 & getElem(echecb,lP+1,cP)%10 == 2 & getInfoCase(lP+1,cP,infosCaseb).isLastDeplacment & getInfoCase(lP+1,cP,infosCaseb).justTwoDeplacment) | 
+            if (listMouv[0].c != cA &
+                ((currentPlayerb == 1 & getElem(echecb,lP+1,cP)%10 == 2 & getInfoCase(lP+1,cP,infosCaseb).isLastDeplacment & getInfoCase(lP+1,cP,infosCaseb).justTwoDeplacment) |
                 (currentPlayerb == 2 & getElem(echecb,lP-1,cP)%10 == 1 & getInfoCase(lP-1,cP,infosCaseb).isLastDeplacment & getInfoCase(lP-1,cP,infosCaseb).justTwoDeplacment))) {
                 if (currentPlayerb == 1) {
                     scorePlayersb[echecb[lP+1][cP]%10][Math.floor(echecb[lP+1][cP]/10)] -= 1;
@@ -377,7 +377,7 @@ function possibleMouvement(lA,cA,lB,cB, echecb, currentPlayerb, infosCaseb) {
             if (lB == lA & cB == cA) {
                 return false;
             }
-            if ((currentPlayerb == 1 & (lB != lA-1 | cB != cA | (echecb[lB][cB] != 0 & cB == cA))) | 
+            if ((currentPlayerb == 1 & (lB != lA-1 | cB != cA | (echecb[lB][cB] != 0 & cB == cA))) |
                 (currentPlayerb == 2 & (lB != lA+1 | cB != cA | (echecb[lB][cB] != 0 & cB == cA)))) { // deplacement en ligne droite
                 if ((currentPlayerb == 1 & ( ( (lB == lA-1 & (cB-cA)**2 == 1) & echecb[lB][cB]%10 != 2 & (getElem(echecb,lB+1,cB)%10 != 2 | !getInfoCase(lB+1,cB,infosCase).isLastDeplacment | !getInfoCase(lB+1,cB,infosCase).justTwoDeplacment) | echecb[lB][cB]%10 == 1) | (lB == lA-2 & (getInfoCase(lA,cA,infosCase).nb > 0 | Math.sqrt((cB-cA)**2) == 2)) | (lB != lA-1 & lB != lA-2) | (lB == lA-1 & cB != cA-1 & cB != cA+1) | (echecb[lB][cB] != 0 & cB == cA))) |
                     (currentPlayerb == 2 & ( ( (lB == lA+1 & (cB-cA)**2 == 1) & echecb[lB][cB]%10 != 1 & (getElem(echecb,lB-1,cB)%10 != 1 | !getInfoCase(lB-1,cB,infosCase).isLastDeplacment | !getInfoCase(lB-1,cB,infosCase).justTwoDeplacment) | echecb[lB][cB]%10 == 2) | (lB == lA+2 & (getInfoCase(lA,cA,infosCase).nb > 0 | Math.sqrt((cB-cA)**2) == 2)) | (lB != lA+1 & lB != lA+2) | (lB == lA+1 & cB != cA-1 & cB != cA+1) | (echecb[lB][cB] != 0 & cB == cA)))) {
@@ -659,7 +659,7 @@ function getPath(l,c,echec) {
             break;
         case 4: //fou
             coefs = [{coefL: -1, coefC: -1},{coefL: -1, coefC: 1}, {coefL: 1, coefC: -1}, {coefL: 1, coefC: 1}];
-            
+
             for (let i=0;i<coefs.length;i++) {
                 const coefL = coefs[i].coefL;
                 const coefC = coefs[i].coefC;
@@ -683,7 +683,7 @@ function getPath(l,c,echec) {
         case 5: //reine
             coefs = [{coefL: -1, coefC: -1},{coefL: -1, coefC: 1}, {coefL: 1, coefC: -1}, {coefL: 1, coefC: 1},
                          {coefL: -1, coefC: 0},{coefL: 1, coefC: 0},{coefL: 0, coefC: -1},{coefL: 0, coefC: 1}];
-            
+
             for (let i=0;i<coefs.length;i++) {
                 const coefL = coefs[i].coefL;
                 const coefC = coefs[i].coefC;
